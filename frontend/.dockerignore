@@ -1,0 +1,15 @@
+.DS_Store
+.idea
+.vscode
+
+.git
+.gitignore
+
+Dockerfile*
+docker-compose*yml
+
+.env*
+
+node_modules
+.next
+npm-debug.log

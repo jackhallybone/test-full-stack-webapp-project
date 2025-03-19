@@ -1,0 +1,6 @@
+.DS_Store
+.idea
+.vscode
+
+.next
+node_modules

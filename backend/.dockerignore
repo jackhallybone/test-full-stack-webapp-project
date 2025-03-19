@@ -1,0 +1,14 @@
+.DS_Store
+.idea
+.vscode
+
+.git
+.gitignore
+
+Dockerfile*
+docker-compose*yml
+
+.env*
+
+venv/
+**/__pycache__/
