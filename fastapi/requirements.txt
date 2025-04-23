@@ -1,0 +1,14 @@
+fastapi
+pydantic[email]
+uvicorn[standard]
+sqlalchemy[asyncio]
+asyncpg
+python-dotenv
+alembic
+psycopg2
+
+pytest
+
+black
+isort
+flake8
