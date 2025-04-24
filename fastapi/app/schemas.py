@@ -1,6 +1,10 @@
 from pydantic import BaseModel, EmailStr
 
 
+class DeleteResponse(BaseModel):
+    message: str
+
+
 class UserBase(BaseModel):
     name: str
     email: EmailStr

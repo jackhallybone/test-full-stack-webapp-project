@@ -6,6 +6,7 @@ asyncpg
 python-dotenv
 alembic
 psycopg2
+strawberry-graphql[fastapi]
 
 pytest
 
