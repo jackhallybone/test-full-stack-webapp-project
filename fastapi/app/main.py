@@ -7,7 +7,7 @@ from app.db import get_db
 from app.graphql.context import get_context_for_request
 from app.graphql.schema import schema
 from app.models import User
-from app.schemas import UserCreate, UserRead
+from app.schemas import UserCreate, UserRead, DeleteResponse
 
 app = FastAPI()
 
@@ -31,5 +31,7 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_db)) -> User:
 
 
 @app.delete("/users/{user_id}")
-async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)) -> User:
+async def delete_user(
+    user_id: int, db: AsyncSession = Depends(get_db)
+) -> DeleteResponse:
     return await crud.delete_user(user_id, db)
