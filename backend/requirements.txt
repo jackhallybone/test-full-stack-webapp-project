@@ -1,8 +1,5 @@
 Django
 psycopg[binary]
-python-dotenv
 django-cors-headers
-django-debug-toolbar
 graphene-django
-django-graphql-jwt
 coverage

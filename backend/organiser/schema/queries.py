@@ -1,8 +1,7 @@
 import graphene
-from graphql_jwt.decorators import login_required
 from organiser.models import Item, Project
 from organiser.schema.filters import filter_items, filter_projects
-from organiser.schema.types import ItemTypeOptionType, ItemStatusOptionType, ItemPriorityOptionType, ItemType, ProjectType
+from organiser.schema.types import ItemTypeType, ItemStatusType, ItemLocationType, ItemType, ProjectType
 
 
 class Query(graphene.ObjectType):
@@ -11,9 +10,9 @@ class Query(graphene.ObjectType):
     Fields:
         projects (list): A list of ProjectType objects.
         project (ProjectType): A specific ProjectType object.
-        item_type_options (list): A list of the possible item type options for a particular project and it's children.
-        item_status_options (list): A list of the possible item status options for a particular project and it's children.
-        item_priority_options (list): A list of the possible item priority options for a particular project and it's children.
+        item_types (list): A list of the possible item type options for a particular project and it's children.
+        item_statuses (list): A list of the possible item status options for a particular project and it's children.
+        item_locations (list): A list of the possible item location options for a particular project and it's children.
         items (list): A list of ItemType objects.
         item (ItemType): A specific ItemType object.
 
@@ -22,12 +21,12 @@ class Query(graphene.ObjectType):
             Resolves all projects.
         resolve_project():
             Resolves a specific project.
-        resolve_item_type_options():
+        resolve_item_types():
             Resolves all the item_type options.
-        resolve_item_status_options():
+        resolve_item_statuses():
             Resolves all the item_status options.
-        resolve_item_priority_options():
-            Resolves all the item_priority options.
+        resolve_item_locations():
+            Resolves all the item_location options.
         resolve_items():
             Resolves all items.
         resolve_item():
@@ -39,16 +38,16 @@ class Query(graphene.ObjectType):
         name_contains=graphene.String(),
     )
     project = graphene.Field(ProjectType, id=graphene.ID())
-    item_type_options = graphene.List(
-        ItemTypeOptionType,
+    item_types = graphene.List(
+        ItemTypeType,
         project=graphene.ID(),
     )
-    item_status_options = graphene.List(
-        ItemStatusOptionType,
+    item_statuses = graphene.List(
+        ItemStatusType,
         project=graphene.ID(),
     )
-    item_priority_options = graphene.List(
-        ItemPriorityOptionType,
+    item_locations = graphene.List(
+        ItemLocationType,
         project=graphene.ID(),
     )
     items = graphene.List(
@@ -57,11 +56,10 @@ class Query(graphene.ObjectType):
         project=graphene.ID(),
         item_type=graphene.ID(),
         item_status=graphene.ID(),
-        item_priority=graphene.ID(),
+        item_location=graphene.ID(),
     )
     item = graphene.Field(ItemType, id=graphene.ID())
 
-    @login_required
     def resolve_projects(self, info, name_contains=None):
         """Resolves all projects.
 
@@ -78,7 +76,6 @@ class Query(graphene.ObjectType):
         projects = Project.objects.all()
         return filter_projects(projects, name_contains)
 
-    @login_required
     def resolve_project(self, info, id):
         """Resolves a specific project.
 
@@ -94,8 +91,7 @@ class Query(graphene.ObjectType):
         """
         return Project.objects.get(id=id)
 
-    @login_required
-    def resolve_item_type_options(self, info, project):
+    def resolve_item_types(self, info, project):
         """Resolves a list of the possible item type options for a particular project and it's children.
 
         Returns:
@@ -106,8 +102,7 @@ class Query(graphene.ObjectType):
         """
         return Project.objects.get(id=project).item_types.all()
 
-    @login_required
-    def resolve_item_status_options(self, info, project):
+    def resolve_item_statuses(self, info, project):
         """Resolves a list of the possible item status options for a particular project and it's children.
 
         Returns:
@@ -118,8 +113,7 @@ class Query(graphene.ObjectType):
         """
         return Project.objects.get(id=project).item_statuses.all()
 
-    @login_required
-    def resolve_item_priority_options(self, info, project):
+    def resolve_item_locations(self, info, project):
         """Resolves a list of the possible item priority options for a particular project and it's children.
 
         Returns:
@@ -128,10 +122,9 @@ class Query(graphene.ObjectType):
         Raises:
             PermissionDenied: If the query/user is not authenticated.
         """
-        return Project.objects.get(id=project).item_priorities.all()
+        return Project.objects.get(id=project).item_locations.all()
 
-    @login_required
-    def resolve_items(self, info, name_contains=None, project=None, item_type=None, item_status=None, item_priority=None):
+    def resolve_items(self, info, name_contains=None, project=None, item_type=None, item_status=None, item_location=None):
         """Resolves all items.
 
         Args:
@@ -140,7 +133,7 @@ class Query(graphene.ObjectType):
             project (ID, optional): Filter to return only the items belonging to the given project (id).
             item_type (ID, optional): Filter to return only the items with the given item_type (id).
             item_status (ID, optional): Filter to return only the items with the given item_status (id).
-            item_priority (ID, optional): Filter to return only the items with the given item_priority (id).
+            item_location (ID, optional): Filter to return only the items with the given item_location (id).
 
         Returns:
             list: A list of `ItemType` objects, filtered based on the parameters.
@@ -150,9 +143,8 @@ class Query(graphene.ObjectType):
         """
         # Getting the children of an item is common, so speculatively prefetch children
         items = Item.objects.prefetch_related("children").all()
-        return filter_items(items, name_contains, project, item_type, item_status, item_priority)
+        return filter_items(items, name_contains, project, item_type, item_status, item_location)
 
-    @login_required
     def resolve_item(self, info, id):
         """Resolves a specific item.
 

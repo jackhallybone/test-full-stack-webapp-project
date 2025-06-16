@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.db.models.signals import post_save
 
 from organiser.admin import ItemAdmin, ProjectAdmin
-from organiser.models import Item, Project, ItemTypeOption, ItemStatusOption, ItemPriorityOption
+from organiser.models import Item, Project, ItemType, ItemStatus, ItemLocation
 from organiser.signals import create_default_project_settings
 
 
@@ -24,14 +24,14 @@ class ProjectAdminTest(TestCase):
             project=project,
             item_type=project.get_default_item_type(),
             item_status=project.get_default_item_status(),
-            item_priority=project.get_default_item_priority(),
+            item_location=project.get_default_item_location(),
         )
         _ = Item.objects.create(
             name="item 2",
             project=project,
             item_type=project.get_default_item_type(),
             item_status=project.get_default_item_status(),
-            item_priority=project.get_default_item_priority(),
+            item_location=project.get_default_item_location(),
         )
         # Create an instance of ProjectAdmin then call the descendants_count function
         project_admin = ProjectAdmin(model=Project, admin_site=None)
@@ -49,15 +49,15 @@ class ItemAdminTest(TestCase):
         # Create a basic hierarchy
         post_save.disconnect(create_default_project_settings, sender=Project)
         self.project = Project.objects.create(name="project")
-        self.item_type_task = ItemTypeOption.objects.create(project=self.project, name="Task", order=4, nestable=True, default=True)
-        self.item_status_to_do = ItemStatusOption.objects.create(project=self.project, name="To Do", order=1, default=True)
-        self.item_priority_medium = ItemPriorityOption.objects.create(project=self.project, name="Medium", order=2, default=True)
+        self.item_type_task = ItemType.objects.create(project=self.project, name="Task", order=4, nestable=True, default=True)
+        self.item_status_to_do = ItemStatus.objects.create(project=self.project, name="To Do", order=1, default=True)
+        self.item_location_backlog = ItemLocation.objects.create(project=self.project, name="Backlog", order=1, default=True)
         self.item_1 = Item.objects.create(
             name="item 1",
             project=self.project,
             item_type=self.item_type_task,
             item_status=self.item_status_to_do,
-            item_priority=self.item_priority_medium,
+            item_location=self.item_location_backlog,
         )
         self.item_2 = Item.objects.create(
             name="item 2",
@@ -65,7 +65,7 @@ class ItemAdminTest(TestCase):
             parent=self.item_1,
             item_type=self.item_type_task,
             item_status=self.item_status_to_do,
-            item_priority=self.item_priority_medium,
+            item_location=self.item_location_backlog,
         )
         # Create an instance of ItemAdmin then call the ancestors_path function
         self.item_admin = ItemAdmin(model=Item, admin_site=None)
@@ -90,10 +90,10 @@ class ItemAdminTest(TestCase):
         item_status_name = self.item_admin.get_item_status_name(self.item_1)
         self.assertEqual(item_status_name, self.item_status_to_do.name)
 
-    def test_item_get_item_priority_name(self):
+    def test_item_get_item_location_name(self):
         """Test that the field for item priority can be populated with the name of the objects priority."""
-        item_priority_name = self.item_admin.get_item_priority_name(self.item_1)
-        self.assertEqual(item_priority_name, self.item_priority_medium.name)
+        item_location_name = self.item_admin.get_item_location_name(self.item_1)
+        self.assertEqual(item_location_name, self.item_location_backlog.name)
 
     def test_item_option_formfield_for_foreignkey(self):
         """Test that the item option form field can get all the linked option objects."""
@@ -104,9 +104,9 @@ class ItemAdminTest(TestCase):
             )
             all_options_queryset = list(option_model.objects.all())
             self.assertEqual(form_field_queryset, all_options_queryset)
-        test("item_type", ItemTypeOption)
-        test("item_status", ItemStatusOption)
-        test("item_priority", ItemPriorityOption)
+        test("item_type", ItemType)
+        test("item_status", ItemStatus)
+        test("item_location", ItemLocation)
 
     def test_item_ancestors_path(self):
         """Test the formatting of the ancestors view in the item list view."""

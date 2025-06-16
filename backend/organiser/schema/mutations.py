@@ -1,19 +1,15 @@
 import graphene
-from graphql_jwt.decorators import login_required
-from organiser.models import Item, Project, ItemTypeOption, ItemStatusOption, ItemPriorityOption
-from organiser.schema.types import ItemType, ProjectType
-
+from organiser.models import Item, Project, ItemType, ItemStatus, ItemLocation
+from organiser.schema.types import ItemType as ItemGraphQLType, ProjectType
 
 class CreateProjectInput(graphene.InputObjectType):
     """Input object type for creating a new project.
 
     Fields:
         name (str): The name of the project. Required.
-        description (str): A description of the project.
     """
 
     name = graphene.String(required=True)
-    description = graphene.String()
 
 
 class PartialUpdateProjectInput(graphene.InputObjectType):
@@ -21,70 +17,58 @@ class PartialUpdateProjectInput(graphene.InputObjectType):
 
     Fields:
         name (str, optional): The new name for the project.
-        description (str, optional): A new description for the project.
     """
 
     name = graphene.String()
-    description = graphene.String()
 
 
 class CreateItemInput(graphene.InputObjectType):
     """Input object type for creating a new item.
 
     Fields:
-        name (str): The name of the item.
-        changelog (str, optional): A short description of the work done.
-        description (str, optional): A general description of the item.
-        requirements (str, optional): A description of the work that needs to be done.
-        outcome (str, optional): A description of the work that has been done.
         project (ID): The ID of the project the item belongs to.
         parent (ID, optional): The ID of the parent item.
         item_type (ID): The ID of the item's item_type.
         item_status (ID): The ID of the item's item_status.
-        item_priority (ID): The ID of the item's item_priority.
-        kanban_row_order (Int, optional): The index/order of the item in the kanban column.
+        item_location (ID): The ID of the item's item_location.
+        title (str): A summary of what needs to be done. Required.
+        changelog (str, optional): A summary of what has been done.
+        requirements (str, optional): A description of what needs to be done.
+        outcomes (str, optional): A description of what was done.
     """
 
-    name = graphene.String(required=True)
-    changelog = graphene.String()
-    description = graphene.String()
-    requirements = graphene.String()
-    outcome = graphene.String()
     project = graphene.ID(required=True)
     parent = graphene.ID()
     item_type = graphene.ID(required=True)
     item_status = graphene.ID(required=True)
-    item_priority = graphene.ID(required=True)
-    kanban_row_order = graphene.Int()
+    item_location = graphene.ID(required=True)
+    title = graphene.String(required=True)
+    changelog = graphene.String()
+    requirements = graphene.String()
+    outcome = graphene.String()
 
 class PartialUpdateItemInput(graphene.InputObjectType):
     """Input object type for partially updating an existing item.
 
     Fields:
-        name (str): The name of the item.
-        changelog (str): A short description of the work done.
-        description (str): A general description of the item.
-        requirements (str): A description of the work that needs to be done.
-        outcome (str): A description of the work that has been done.
-        project (ID): The ID of the project the item belongs to.
-        parent (ID): The ID of the parent item.
-        item_type (ID): The ID of the item's item_type.
-        item_status (ID): The ID of the item's item_status.
-        item_priority (ID): The ID of the item's item_priority.
-        kanban_row_order (Int): The index/order of the item in the kanban column.
+        parent (ID, optional): The ID of the parent item.
+        item_type (ID, optional): The ID of the item's item_type.
+        item_status (ID, optional): The ID of the item's item_status.
+        item_location (ID, optional): The ID of the item's item_location.
+        title (str, optional): A summary of what needs to be done. Required.
+        changelog (str, optional): A summary of what has been done.
+        requirements (str, optional): A description of what needs to be done.
+        outcomes (str, optional): A description of what was done.
     """
 
-    name = graphene.String()
-    changelog = graphene.String()
-    description = graphene.String()
-    requirements = graphene.String()
-    outcome = graphene.String()
-    project = graphene.ID()
     parent = graphene.ID()
     item_type = graphene.ID()
     item_status = graphene.ID()
-    item_priority = graphene.ID()
-    kanban_row_order = graphene.Int()
+    item_location = graphene.ID()
+    title = graphene.String()
+    changelog = graphene.String()
+    requirements = graphene.String()
+    outcome = graphene.String()
 
 
 class CreateProject(graphene.Mutation):
@@ -113,7 +97,6 @@ class CreateProject(graphene.Mutation):
 
     project = graphene.Field(lambda: ProjectType)
 
-    @login_required
     def mutate(self, info, input):
         """Create a new project in the database with the given input field data."""
         project = Project.objects.create(**input)
@@ -149,7 +132,6 @@ class UpdateProject(graphene.Mutation):
 
     project = graphene.Field(lambda: ProjectType)
 
-    @login_required
     def mutate(self, info, id, input):
         """Validates and updates the project in the database with the given input field data."""
         project = Project.objects.get(pk=id)
@@ -186,7 +168,6 @@ class DeleteProject(graphene.Mutation):
 
     success = graphene.Boolean()
 
-    @login_required
     def mutate(self, info, id):
         """Deletes the project from the database."""
         project = Project.objects.get(pk=id)
@@ -201,7 +182,7 @@ class CreateItem(graphene.Mutation):
         input (CreateItemInput): Input object containing the details of the item to create.
 
     Fields:
-        item (ItemType): The newly created item object.
+        item (ItemGraphQLType): The newly created item object.
 
     Methods:
         mutate():
@@ -220,9 +201,8 @@ class CreateItem(graphene.Mutation):
     class Arguments:
         input = CreateItemInput(required=True)
 
-    item = graphene.Field(lambda: ItemType)
+    item = graphene.Field(lambda: ItemGraphQLType)
 
-    @login_required
     def mutate(self, info, input):
         """Create a new item in the database with the given input field data."""
         # Get the project instance (returns error message id is not found)
@@ -235,17 +215,17 @@ class CreateItem(graphene.Mutation):
 
         # Get the item type instance if it's defined (returns error message if id is not found)
         item_type_id = input.pop("item_type", None)
-        item_type = ItemTypeOption.objects.get(pk=item_type_id) if item_type_id else None
+        item_type = ItemType.objects.get(pk=item_type_id) if item_type_id else None
 
         # Get the item_status instance if it's defined (returns error message if id is not found)
         item_status_id = input.pop("item_status", None)
-        item_status = ItemStatusOption.objects.get(pk=item_status_id) if item_status_id else None
+        item_status = ItemStatus.objects.get(pk=item_status_id) if item_status_id else None
 
-        # Get the item_priority instance if it's defined (returns error message if id is not found)
-        item_priority_id = input.pop("item_priority", None)
-        item_priority = ItemPriorityOption.objects.get(pk=item_priority_id) if item_priority_id else None
+        # Get the item_location instance if it's defined (returns error message if id is not found)
+        item_location_id = input.pop("item_location", None)
+        item_location = ItemLocation.objects.get(pk=item_location_id) if item_location_id else None
 
-        item = Item.objects.create(project=project, parent=parent, item_type=item_type, item_status=item_status, item_priority=item_priority, **input)
+        item = Item.objects.create(project=project, parent=parent, item_type=item_type, item_status=item_status, item_location=item_location, **input)
         return CreateItem(item=item)
 
 
@@ -257,7 +237,7 @@ class UpdateItem(graphene.Mutation):
         input (PartialUpdateItemInput): An input object containing the fields to update.
 
     Fields:
-        item (ItemType): The updated item object.
+        item (ItemGraphQLType): The updated item object.
 
     Methods:
         mutate():
@@ -278,18 +258,12 @@ class UpdateItem(graphene.Mutation):
         id = graphene.ID(required=True)
         input = PartialUpdateItemInput(required=True)
 
-    item = graphene.Field(lambda: ItemType)
+    item = graphene.Field(lambda: ItemGraphQLType)
 
-    @login_required
     def mutate(self, info, id, input):
         """Validates and updates the item in the database with the given input field data."""
         fields_to_update = input.keys()
         item = Item.objects.get(pk=id)
-
-        # Update the project using the project instance if it's given (returns error message if id is not found)
-        project_id = input.pop("project", None)
-        if project_id:
-            item.project = Project.objects.get(pk=project_id)
 
         # Update the parent using the parent instance if it's given (returns error message if id is not found)
         parent_id = input.pop("parent", None)
@@ -299,17 +273,17 @@ class UpdateItem(graphene.Mutation):
         # Update the item_type using the item_type instance if it's given (returns error message if id is not found)
         item_type_id = input.pop("item_type", None)
         if item_type_id:
-            item.item_type = ItemTypeOption.objects.get(pk=item_type_id)
+            item.item_type = ItemType.objects.get(pk=item_type_id)
 
         # Update the item_status using the item_status instance if it's given (returns error message if id is not found)
         item_status_id = input.pop("item_status", None)
         if item_status_id:
-            item.item_status = ItemStatusOption.objects.get(pk=item_status_id)
+            item.item_status = ItemStatus.objects.get(pk=item_status_id)
 
-        # Update the item_priority using the item_priority instance if it's given (returns error message if id is not found)
-        item_priority_id = input.pop("item_priority", None)
-        if item_priority_id:
-            item.item_priority = ItemPriorityOption.objects.get(pk=item_priority_id)
+        # Update the item_location using the item_location instance if it's given (returns error message if id is not found)
+        item_location_id = input.pop("item_location", None)
+        if item_location_id:
+            item.item_location = ItemLocation.objects.get(pk=item_location_id)
 
         for attr, value in input.items():
             setattr(item, attr, value)
@@ -344,7 +318,6 @@ class DeleteItem(graphene.Mutation):
 
     success = graphene.Boolean()
 
-    @login_required
     def mutate(self, info, id):
         """Deletes the item from the database."""
         item = Item.objects.get(pk=id)

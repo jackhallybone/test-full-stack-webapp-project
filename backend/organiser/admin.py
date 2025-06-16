@@ -2,27 +2,27 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
-from .models import Item, Project, ItemTypeOption, ItemStatusOption, ItemPriorityOption
+from .models import Item, Project, ItemType, ItemStatus, ItemLocation
 
 
-class ItemTypeOptionInline(admin.TabularInline):
-    model = ItemTypeOption
+class ItemTypeInline(admin.TabularInline):
+    model = ItemType
     extra = 1
-    fields = ['name', 'order', 'nestable', 'default']
+    fields = ['name', "default", 'order', 'nestable']
     ordering = ['order']
 
 
-class ItemStatusOptionInline(admin.TabularInline):
-    model = ItemStatusOption
+class ItemStatusInline(admin.TabularInline):
+    model = ItemStatus
     extra = 1
-    fields = ['name', 'order', 'default']
+    fields = ['name', 'default', 'order']
     ordering = ['order']
 
 
-class ItemPriorityOptionInline(admin.TabularInline):
-    model = ItemPriorityOption
+class ItemLocationInline(admin.TabularInline):
+    model = ItemLocation
     extra = 1
-    fields = ['name', 'order', 'default']
+    fields = ['name', 'default', 'order']
     ordering = ['order']
 
 
@@ -30,14 +30,18 @@ class ProjectAdmin(admin.ModelAdmin):
     search_fields = ("name",)
     list_display = ("name", "id", "descendants_count", "updated_at")
     ordering = ["-updated_at"]
-    readonly_fields = ("created_at", "created_by", "updated_at", "updated_by")
+    readonly_fields = (
+        "created_at",
+        # "created_by",
+        "updated_at",
+        # "updated_by"
+    )
     fieldsets = (
         (
             "Description",
             {
                 "fields": (
                     "name",
-                    "description",
                 ),
             },
         ),
@@ -46,14 +50,14 @@ class ProjectAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "created_at",
-                    "created_by",
+                    # "created_by",
                     "updated_at",
-                    "updated_by",
+                    # "updated_by",
                 ),
             },
         ),
     )
-    inlines = [ItemTypeOptionInline, ItemStatusOptionInline, ItemPriorityOptionInline]
+    inlines = [ItemTypeInline, ItemStatusInline, ItemLocationInline]
 
     def descendants_count(self, obj):
         """Count the number of descendants, and link to an Item view filtered for the project."""
@@ -64,23 +68,23 @@ class ProjectAdmin(admin.ModelAdmin):
 
 
 class ItemAdmin(admin.ModelAdmin):
-    search_fields = ("name",)
-    list_display = ("name", "id", "get_item_type_name", "ancestors_path", "updated_at")
+    search_fields = ("title",)
+    list_display = ("title", "id", "get_item_type_name", "ancestors_path", "updated_at")
     ordering = ["-updated_at"]
-    readonly_fields = ("created_at", "created_by", "updated_at", "updated_by")
+    readonly_fields = (
+        "created_at",
+        # "created_by",
+        "updated_at",
+        # "updated_by"
+    )
     fieldsets = (
         (
-            "Description",
+            "Settings",
             {
                 "fields": (
-                    "name",
-                    "changelog",
-                    "description",
-                    "requirements",
-                    "outcome",
                     "item_type",
                     "item_status",
-                    "item_priority",
+                    "item_location",
                 ),
             },
         ),
@@ -94,10 +98,13 @@ class ItemAdmin(admin.ModelAdmin):
             },
         ),
         (
-            "Organisation",
+            "Details",
             {
                 "fields": (
-                    "kanban_row_order",
+                    "title",
+                    "changelog",
+                    "requirements",
+                    "outcome",
                 ),
             },
         ),
@@ -106,9 +113,9 @@ class ItemAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "created_at",
-                    "created_by",
+                    # "created_by",
                     "updated_at",
-                    "updated_by",
+                    # "updated_by",
                 ),
             },
         ),
@@ -122,12 +129,12 @@ class ItemAdmin(admin.ModelAdmin):
         return obj.item_status.name if obj.item_status else None
     get_item_status_name.short_description = 'Item Status'
 
-    def get_item_priority_name(self, obj):
-        return obj.item_priority.name if obj.item_priority else None
-    get_item_priority_name.short_description = 'Item Priority'
+    def get_item_location_name(self, obj):
+        return obj.item_location.name if obj.item_location else None
+    get_item_location_name.short_description = 'Item Location'
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'item_type' or db_field.name == 'item_status' or db_field.name == 'item_priority':
+        if db_field.name == 'item_type' or db_field.name == 'item_status' or db_field.name == 'item_location':
             # Return all the items, regardless of the project
             kwargs['queryset'] = db_field.remote_field.model.objects.all()
         return super().formfield_for_foreignkey(db_field, request, **kwargs)

@@ -13,11 +13,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -48,7 +43,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "graphene_django",
-    "api",
     "organiser",
 ]
 
@@ -93,8 +87,8 @@ DATABASES = {
         "NAME": os.getenv("POSTGRES_DB"),
         "USER": os.getenv("POSTGRES_USER"),
         "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
-        "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
+        "HOST": os.getenv("POSTGRES_HOST"),
+        "PORT": os.getenv("POSTGRES_PORT"),
     }
 }
 
@@ -147,15 +141,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # https://django-graphql-jwt.domake.io/index.html
 
 GRAPHENE = {
-    "SCHEMA": "api.schema.schema",
-    "MIDDLEWARE": [
-        "graphql_jwt.middleware.JSONWebTokenMiddleware",
-    ],
+    "SCHEMA": "organiser.schema.schema.schema",
 }
-AUTHENTICATION_BACKENDS = [
-    "graphql_jwt.backends.JSONWebTokenBackend",
-    "django.contrib.auth.backends.ModelBackend",
-]
 
 
 # CORS Settings
@@ -164,16 +151,6 @@ AUTHENTICATION_BACKENDS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000", # From client-side frontend (browser) into backend Docker container
 ]
-
-CORS_ALLOW_CREDENTIALS = True # For JWT Authorization header
-
-
-
-
-
-
-
-
 
 # LOGGING = {
 #     "version": 1,
