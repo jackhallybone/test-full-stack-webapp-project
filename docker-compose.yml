@@ -36,9 +36,21 @@ services:
         env_file:
             - ./backend/.env
         ports:
-            - 5433:5432
+            - 5432:5432
+
+    pgadmin:
+        image: dpage/pgadmin4
+        env_file:
+            - ./backend/.env
+        ports:
+        - 5050:80
+        volumes:
+        - pgadmin_data:/var/lib/pgadmin
+        depends_on:
+        - db
 
 volumes:
     node_modules:
     next_build:
     postgres_data:
+    pgadmin_data:

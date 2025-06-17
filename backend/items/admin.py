@@ -60,16 +60,16 @@ class ProjectAdmin(admin.ModelAdmin):
     inlines = [ItemTypeInline, ItemStatusInline, ItemLocationInline]
 
     def descendants_count(self, obj):
-        """Count the number of descendants, and link to an Item view filtered for the project."""
-        # Generate a URL to the items page with a filter for the current project
-        url = reverse("admin:organiser_item_changelist")
-        url_with_filter = f"{url}?project__id={obj.id}"
-        return format_html('<a href="{}">{}</a>', url_with_filter, obj.get_descendants().count())
+        """Return an html a tag linking to an Item page filter view for all items belonging to a project."""
+        item_list_url = reverse("admin:items_item_changelist")
+        filtered_item_list_url = f"{item_list_url}?project__id={obj.id}"
+        num_descendants = obj.get_num_descendants()
+        return format_html('<a href="{}">{}</a>', filtered_item_list_url, num_descendants)
 
 
 class ItemAdmin(admin.ModelAdmin):
     search_fields = ("title",)
-    list_display = ("title", "id", "get_item_type_name", "ancestors_path", "updated_at")
+    list_display = ("title", "id", "get_item_type_name", "ancestors_breadcrumb", "updated_at")
     ordering = ["-updated_at"]
     readonly_fields = (
         "created_at",
@@ -133,26 +133,20 @@ class ItemAdmin(admin.ModelAdmin):
         return obj.item_location.name if obj.item_location else None
     get_item_location_name.short_description = 'Item Location'
 
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'item_type' or db_field.name == 'item_status' or db_field.name == 'item_location':
-            # Return all the items, regardless of the project
-            kwargs['queryset'] = db_field.remote_field.model.objects.all()
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
-    def ancestors_path(self, obj):
-        """Create a linked ancestors path in the format 'project / parent / parent / ...'."""
+    def ancestors_breadcrumb(self, obj):
+        """Create an html breadcrumb of an item's ancestors with links to each ancestor."""
         ancestors = obj.get_ancestors()
         ancestor_links = [
             format_html(
                 '<a href="{}">{}</a>',
-                reverse("admin:organiser_project_change", args=[obj.project.id]),
+                reverse("admin:items_project_change", args=[obj.project.id]),
                 str(obj.project),
             )
         ]
         for ancestor in ancestors:
             ancestor_links.append(
                 format_html(
-                    '<a href="{}">{}</a>', reverse("admin:organiser_item_change", args=[ancestor.id]), str(ancestor)
+                    '<a href="{}">{}</a>', reverse("admin:items_item_change", args=[ancestor.id]), str(ancestor)
                 )
             )
         return format_html(" / ".join(ancestor_links))
