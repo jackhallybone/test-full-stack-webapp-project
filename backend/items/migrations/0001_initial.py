@@ -8,83 +8,174 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Project',
+            name="Project",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=100)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=100)),
             ],
             options={
-                'ordering': ['name'],
+                "ordering": ["name"],
             },
         ),
         migrations.CreateModel(
-            name='ItemType',
+            name="ItemType",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('default', models.BooleanField(default=False)),
-                ('order', models.SmallIntegerField()),
-                ('nestable', models.BooleanField(default=False)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='items.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("default", models.BooleanField(default=False)),
+                ("order", models.SmallIntegerField()),
+                ("nestable", models.BooleanField(default=False)),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="items.project"
+                    ),
+                ),
             ],
             options={
-                'ordering': ['order'],
-                'abstract': False,
+                "ordering": ["order"],
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='ItemStatus',
+            name="ItemStatus",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('default', models.BooleanField(default=False)),
-                ('order', models.SmallIntegerField()),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='items.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("default", models.BooleanField(default=False)),
+                ("order", models.SmallIntegerField()),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="items.project"
+                    ),
+                ),
             ],
             options={
-                'ordering': ['order'],
-                'abstract': False,
+                "ordering": ["order"],
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='ItemLocation',
+            name="ItemLocation",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
-                ('default', models.BooleanField(default=False)),
-                ('order', models.SmallIntegerField()),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='items.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=100)),
+                ("default", models.BooleanField(default=False)),
+                ("order", models.SmallIntegerField()),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE, to="items.project"
+                    ),
+                ),
             ],
             options={
-                'ordering': ['order'],
-                'abstract': False,
+                "ordering": ["order"],
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Item',
+            name="Item",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('title', models.CharField(max_length=100)),
-                ('changelog', models.CharField(blank=True, max_length=100)),
-                ('requirements', models.TextField(blank=True)),
-                ('outcome', models.TextField(blank=True)),
-                ('parent', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='children', to='items.item')),
-                ('item_location', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='items.itemlocation')),
-                ('item_status', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='items.itemstatus')),
-                ('item_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='items.itemtype')),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='items.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("title", models.CharField(max_length=100)),
+                ("changelog", models.CharField(blank=True, max_length=100)),
+                ("requirements", models.TextField(blank=True)),
+                ("outcome", models.TextField(blank=True)),
+                (
+                    "parent",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="children",
+                        to="items.item",
+                    ),
+                ),
+                (
+                    "item_location",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="items",
+                        to="items.itemlocation",
+                    ),
+                ),
+                (
+                    "item_status",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="items",
+                        to="items.itemstatus",
+                    ),
+                ),
+                (
+                    "item_type",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="items",
+                        to="items.itemtype",
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="items",
+                        to="items.project",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['item_type', 'created_at'],
+                "ordering": ["item_type", "created_at"],
             },
         ),
     ]

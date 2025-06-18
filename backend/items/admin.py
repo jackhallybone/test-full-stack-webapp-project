@@ -2,28 +2,28 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 
-from .models import Item, Project, ItemType, ItemStatus, ItemLocation
+from .models import Item, ItemLocation, ItemStatus, ItemType, Project
 
 
 class ItemTypeInline(admin.TabularInline):
     model = ItemType
     extra = 1
-    fields = ['name', "default", 'order', 'nestable']
-    ordering = ['order']
+    fields = ["name", "default", "order", "nestable"]
+    ordering = ["order"]
 
 
 class ItemStatusInline(admin.TabularInline):
     model = ItemStatus
     extra = 1
-    fields = ['name', 'default', 'order']
-    ordering = ['order']
+    fields = ["name", "default", "order"]
+    ordering = ["order"]
 
 
 class ItemLocationInline(admin.TabularInline):
     model = ItemLocation
     extra = 1
-    fields = ['name', 'default', 'order']
-    ordering = ['order']
+    fields = ["name", "default", "order"]
+    ordering = ["order"]
 
 
 class ProjectAdmin(admin.ModelAdmin):
@@ -40,9 +40,7 @@ class ProjectAdmin(admin.ModelAdmin):
         (
             "Description",
             {
-                "fields": (
-                    "name",
-                ),
+                "fields": ("name",),
             },
         ),
         (
@@ -64,12 +62,20 @@ class ProjectAdmin(admin.ModelAdmin):
         item_list_url = reverse("admin:items_item_changelist")
         filtered_item_list_url = f"{item_list_url}?project__id={obj.id}"
         num_descendants = obj.get_num_descendants()
-        return format_html('<a href="{}">{}</a>', filtered_item_list_url, num_descendants)
+        return format_html(
+            '<a href="{}">{}</a>', filtered_item_list_url, num_descendants
+        )
 
 
 class ItemAdmin(admin.ModelAdmin):
     search_fields = ("title",)
-    list_display = ("title", "id", "get_item_type_name", "ancestors_breadcrumb", "updated_at")
+    list_display = (
+        "title",
+        "id",
+        "get_item_type_name",
+        "ancestors_breadcrumb",
+        "updated_at",
+    )
     ordering = ["-updated_at"]
     readonly_fields = (
         "created_at",
@@ -123,15 +129,18 @@ class ItemAdmin(admin.ModelAdmin):
 
     def get_item_type_name(self, obj):
         return obj.item_type.name if obj.item_type else None
-    get_item_type_name.short_description = 'Item Type'
+
+    get_item_type_name.short_description = "Item Type"
 
     def get_item_status_name(self, obj):
         return obj.item_status.name if obj.item_status else None
-    get_item_status_name.short_description = 'Item Status'
+
+    get_item_status_name.short_description = "Item Status"
 
     def get_item_location_name(self, obj):
         return obj.item_location.name if obj.item_location else None
-    get_item_location_name.short_description = 'Item Location'
+
+    get_item_location_name.short_description = "Item Location"
 
     def ancestors_breadcrumb(self, obj):
         """Create an html breadcrumb of an item's ancestors with links to each ancestor."""
@@ -146,7 +155,9 @@ class ItemAdmin(admin.ModelAdmin):
         for ancestor in ancestors:
             ancestor_links.append(
                 format_html(
-                    '<a href="{}">{}</a>', reverse("admin:items_item_change", args=[ancestor.id]), str(ancestor)
+                    '<a href="{}">{}</a>',
+                    reverse("admin:items_item_change", args=[ancestor.id]),
+                    str(ancestor),
                 )
             )
         return format_html(" / ".join(ancestor_links))

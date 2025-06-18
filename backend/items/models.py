@@ -1,8 +1,35 @@
-from django.db import models
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from items.mixins import AuditMixin
+
+
+class ProjectQuerySet(models.QuerySet):
+    def filter_projects(self, **filters):
+        qs = self
+        if filters.get("name_contains"):
+            qs = qs.filter(name__icontains=filters["name_contains"])
+        return qs
+
+
+class ItemQuerySet(models.QuerySet):
+    def filter_items(self, **filters):
+        qs = self
+        if filters.get("title_contains"):
+            qs = qs.filter(title__icontains=filters["title_contains"])
+        if filters.get("changelog_contains"):
+            qs = qs.filter(changelog__icontains=filters["changelog_contains"])
+        if filters.get("project"):
+            qs = qs.filter(project=filters["project"])
+        if filters.get("item_type"):
+            qs = qs.filter(item_type=filters["item_type"])
+        if filters.get("item_status"):
+            qs = qs.filter(item_status=filters["item_status"])
+        if filters.get("item_location"):
+            qs = qs.filter(item_location=filters["item_location"])
+        return qs
+
 
 class Project(AuditMixin):
     """The model representing a project in the hierarchical system.
@@ -15,39 +42,53 @@ class Project(AuditMixin):
 
     name = models.CharField(max_length=100)
 
+    objects = ProjectQuerySet.as_manager()
+
     class Meta:
         ordering = ["name"]  # order queries alphanumerically (numbers then A-Z)
 
     def __str__(self):
         return f"Project: {self.name}"
 
+    def get_item_types(self):
+        """Return all `ItemType`s for the current `Project`."""
+        return self.itemtype_set.all()
+
     def get_default_item_type(self):
         """Return the `ItemType` marked as default for the current `Project`."""
-        return self.itemtype_set.filter(default=True).first()
+        return self.get_item_types().filter(default=True).first()
+
+    def get_item_statuses(self):
+        """Return all `ItemStatus`es for the current `Project`."""
+        return self.itemstatus_set.all()
 
     def get_default_item_status(self):
         """Return the `ItemStatus` marked as default for the current `Project`."""
-        return self.itemstatus_set.filter(default=True).first()
+        return self.get_item_statuses().filter(default=True).first()
+
+    def get_item_locations(self):
+        """Return all `ItemLocation`s for the current `Project`."""
+        return self.itemlocation_set.all()
 
     def get_default_item_location(self):
         """Return the `ItemLocation` marked as default for the current `Project`."""
-        return self.itemlocation_set.filter(default=True).first()
+        return self.get_item_locations().filter(default=True).first()
 
-    def get_descendants(self):
-        """Return a QuerySet of all `Item`s that are descendants of (assigned to) this `Project`."""
-        return self.items.all()
+    def get_descendants(self, **filters):
+        """Return a QuerySet of all `Item`s matching the filter that are descendants of (assigned to) this `Project`."""
+        return self.items.all().filter_items(**filters)
 
-    def get_num_descendants(self):
-        """Return the number of `Item`s that are descendants of (assigned to) this `Project`."""
-        return self.get_descendants().count()
+    def get_num_descendants(self, **filters):
+        """Return the number of `Item`s matching the filter that are descendants of (assigned to) this `Project`."""
+        return self.get_descendants(**filters).count()
 
-    def get_children(self):
-        """Return a QuerySet of `Item`s that are direct children (do not have a parent `Item`) of this `Project`."""
-        return self.items.filter(parent=None)
+    def get_children(self, **filters):
+        """Return a QuerySet of `Item`s matching the filter that are direct children (do not have a parent `Item`) of this `Project`."""
+        return self.items.filter(parent=None).filter_items(**filters)
 
-    def get_num_children(self):
-        """Return the number of `Item`s that are direct children (do not have a parent `Item`) of this `Project`."""
-        return self.get_children().count()
+    def get_num_children(self, **filters):
+        """Return the number of `Item`s matching the filter that are direct children (do not have a parent `Item`) of this `Project`."""
+        return self.get_children(**filters).count()
 
     def clean(self):
         """Validate the model data before saving."""
@@ -74,14 +115,16 @@ class BaseItemAttribute(models.Model):
         order (int): The number of the attribute in the logical order of its set.
     """
 
-    project = models.ForeignKey(Project, on_delete=models.CASCADE) # uses default related_name
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE
+    )  # uses default related_name
     name = models.CharField(max_length=100)
     default = models.BooleanField(default=False)
     order = models.SmallIntegerField()
 
     class Meta:
         abstract = True
-        ordering = ["order"] # ascending
+        ordering = ["order"]  # ascending
 
     def __str__(self):
         return f"{self.__class__.__name__}: {self.name} (for {self.project.name})"
@@ -95,15 +138,42 @@ class BaseItemAttribute(models.Model):
         if not self.name:
             raise ValidationError(f"{self.__class__.__name__} name cannot be blank.")
 
-        if type(self).objects.filter(project=self.project, name=self.name).exclude(id=self.id).exists():
-            raise ValidationError(_(f"{self.__class__.__name__} names must be unique within each project."))
+        if (
+            type(self)
+            .objects.filter(project=self.project, name=self.name)
+            .exclude(id=self.id)
+            .exists()
+        ):
+            raise ValidationError(
+                _(
+                    f"{self.__class__.__name__} names must be unique within each project."
+                )
+            )
 
         if self.default:
-            if type(self).objects.filter(project=self.project, default=True).exclude(id=self.id).exists():
-                raise ValidationError(_(f"There can only be one default {self.__class__.__name__} within each project."))
+            if (
+                type(self)
+                .objects.filter(project=self.project, default=True)
+                .exclude(id=self.id)
+                .exists()
+            ):
+                raise ValidationError(
+                    _(
+                        f"There can only be one default {self.__class__.__name__} within each project."
+                    )
+                )
 
-        if type(self).objects.filter(project=self.project, order=self.order).exclude(id=self.id).exists():
-            raise ValidationError(_(f"{self.__class__.__name__} order must be unique within each project."))
+        if (
+            type(self)
+            .objects.filter(project=self.project, order=self.order)
+            .exclude(id=self.id)
+            .exists()
+        ):
+            raise ValidationError(
+                _(
+                    f"{self.__class__.__name__} order must be unique within each project."
+                )
+            )
 
     def save(self, *args, **kwargs):
         """Calls the `clean` method before saving the item."""
@@ -121,16 +191,17 @@ class ItemType(BaseItemAttribute):
     Attributes:
         nestable (bool): A flag to indicate if items of this type can nest below items of the same type. Defaults to False.
     """
+
     nestable = models.BooleanField(default=False)
 
     @staticmethod
     def default_options():
         """Return a list of default item type attributes for when creating a new project."""
         return [
-            {'name': _('Area'), 'default': False, 'order': 1, 'nestable': False},
-            {'name': _('Epic'), 'default': False, 'order': 2, 'nestable': False},
-            {'name': _('Feature'), 'default': False, 'order': 3, 'nestable': False},
-            {'name': _('Task'), 'default': True, 'order': 4, 'nestable': True},
+            {"name": _("Area"), "default": False, "order": 1, "nestable": False},
+            {"name": _("Epic"), "default": False, "order": 2, "nestable": False},
+            {"name": _("Feature"), "default": False, "order": 3, "nestable": False},
+            {"name": _("Task"), "default": True, "order": 4, "nestable": True},
         ]
 
 
@@ -146,9 +217,9 @@ class ItemStatus(BaseItemAttribute):
     def default_options():
         """Return a list of default item status attributes for when creating a new project."""
         return [
-            {'name': _('To Do'), 'default': True, 'order': 1},
-            {'name': _('In Progress'), 'default': False, 'order': 2},
-            {'name': _('Done'), 'default': False, 'order': 3},
+            {"name": _("To Do"), "default": True, "order": 1},
+            {"name": _("In Progress"), "default": False, "order": 2},
+            {"name": _("Done"), "default": False, "order": 3},
         ]
 
 
@@ -164,9 +235,9 @@ class ItemLocation(BaseItemAttribute):
     def default_options():
         """Return a list of default item location attributes for when creating a new project."""
         return [
-            {'name': _('Backlog'), 'default': True, 'order': 1},
-            {'name': _('Board'), 'default': False, 'order': 2},
-            {'name': _('Cleared'), 'default': False, 'order': 3},
+            {"name": _("Backlog"), "default": True, "order": 1},
+            {"name": _("Board"), "default": False, "order": 2},
+            {"name": _("Cleared"), "default": False, "order": 3},
         ]
 
 
@@ -190,17 +261,30 @@ class Item(AuditMixin):
     """
 
     project = models.ForeignKey(Project, related_name="items", on_delete=models.CASCADE)
-    parent = models.ForeignKey("self", blank=True, null=True, related_name="children", on_delete=models.CASCADE)
-    item_type = models.ForeignKey(ItemType, related_name="items", on_delete=models.CASCADE)
-    item_status = models.ForeignKey(ItemStatus, related_name="items", on_delete=models.CASCADE)
-    item_location = models.ForeignKey(ItemLocation, related_name="items", on_delete=models.CASCADE)
+    parent = models.ForeignKey(
+        "self", blank=True, null=True, related_name="children", on_delete=models.CASCADE
+    )
+    item_type = models.ForeignKey(
+        ItemType, related_name="items", on_delete=models.CASCADE
+    )
+    item_status = models.ForeignKey(
+        ItemStatus, related_name="items", on_delete=models.CASCADE
+    )
+    item_location = models.ForeignKey(
+        ItemLocation, related_name="items", on_delete=models.CASCADE
+    )
     title = models.CharField(max_length=100)
     changelog = models.CharField(max_length=100, blank=True)
     requirements = models.TextField(blank=True)
     outcome = models.TextField(blank=True)
 
+    objects = ItemQuerySet.as_manager()
+
     class Meta:
-        ordering = ["item_type", "created_at"]  # order queries by type then oldest first
+        ordering = [
+            "item_type",
+            "created_at",
+        ]  # order queries by type then oldest first
 
     def __str__(self):
         return f"Item: {self.title} ({self.item_type.name} in {self.project.name})"
@@ -212,7 +296,9 @@ class Item(AuditMixin):
     def _find_ancestors(self):
         """Create a list of ids of all `Item`s that are ancestors of this `Item, ordered from root to this item's parent."""
         # Get all items in the current items project, but only the id and parent_id fields
-        items = Item.objects.filter(project_id=self.project_id).values_list("id", "parent_id")
+        items = Item.objects.filter(project_id=self.project_id).values_list(
+            "id", "parent_id"
+        )
 
         # Build a child->parent relationship lookup in the format {item_id: parent_id, ...}
         parent_lookup = {item_id: parent_id for item_id, parent_id in items}
@@ -248,10 +334,12 @@ class Item(AuditMixin):
         ancestor_ids = self._find_ancestors()
         return len(ancestor_ids)
 
-    def _find_descendants(self):
+    def _find_all_descendants(self):
         """Create a list of ids of all `Item`s that are descendants of this `Item."""
         # Fetch only the necessary fields for traversing the ancestry (id, parent_id) for all items in the current project
-        items = Item.objects.filter(project_id=self.project_id).values_list("id", "parent_id")
+        items = Item.objects.filter(project_id=self.project_id).values_list(
+            "id", "parent_id"
+        )
 
         # Build a parent->children relationship lookup dictionary in the format {parent_id: [child_id, ...], ...}
         child_lookup = {}
@@ -270,23 +358,22 @@ class Item(AuditMixin):
 
         return descendants_ids
 
-    def get_descendants(self):
-        """Returns a QuerySet of all `Item`s that are descendants of this `Item."""
-        descendants_ids = self._find_descendants()
-        return Item.objects.filter(id__in=descendants_ids)
+    def get_descendants(self, **filters):
+        """Returns a QuerySet of all `Item`s matching the filter that are descendants of this `Item."""
+        descendants_ids = self._find_all_descendants()
+        return Item.objects.filter(id__in=descendants_ids).filter_items(**filters)
 
-    def get_num_descendants(self):
-        """Returns the number of `Item`s that are descendants of this `Item`."""
-        descendants_ids = self._find_descendants()
-        return len(descendants_ids)
+    def get_num_descendants(self, **filters):
+        """Returns the number of `Item`s matching the filter that are descendants of this `Item`."""
+        return self.get_descendants(**filters).count()
 
-    def get_children(self):
-        """Return a QuerySet of `Item`s that are direct children of this `Item`."""
-        return self.children.all()
+    def get_children(self, **filters):
+        """Return a QuerySet of `Item`s matching the filter that are direct children of this `Item`."""
+        return self.children.all().filter_items(**filters)
 
-    def get_num_children(self):
-        """Return the number of `Item`s that are direct children of this `Item`."""
-        return self.get_children().count()
+    def get_num_children(self, **filters):
+        """Return the number of `Item`s matching the filter that are direct children of this `Item`."""
+        return self.get_children(**filters).count()
 
     def clean(self):
         """Validate the model data before saving."""
@@ -296,38 +383,60 @@ class Item(AuditMixin):
         self.changelog = self.changelog.strip()  # Strip whitespace
 
         if not self.title:
-            raise ValidationError(_(f"{self.__class__.__name__} title cannot be empty."))
+            raise ValidationError(
+                _(f"{self.__class__.__name__} title cannot be empty.")
+            )
 
         if self._original_project and self.project != self._original_project:
             raise ValidationError(_("An item cannot change project once created."))
 
         if self.item_type not in self.project.itemtype_set.all():
-            raise ValidationError(_("Item type attribute selection must belong to the same project as the item."))
+            raise ValidationError(
+                _(
+                    "Item type attribute selection must belong to the same project as the item."
+                )
+            )
 
         if self.item_status not in self.project.itemstatus_set.all():
-            raise ValidationError(_("Item status attribute selection must belong to the same project as the item."))
+            raise ValidationError(
+                _(
+                    "Item status attribute selection must belong to the same project as the item."
+                )
+            )
 
         if self.item_location not in self.project.itemlocation_set.all():
-            raise ValidationError(_("Item location attribute selection must belong to the same project as the item."))
+            raise ValidationError(
+                _(
+                    "Item location attribute selection must belong to the same project as the item."
+                )
+            )
 
         if self.parent:
             if self == self.parent:
                 raise ValidationError(_("An item cannot be its own parent."))
 
             if self.parent.project != self.project:
-                raise ValidationError(_("An item must belong to the same project as its parent."))
+                raise ValidationError(
+                    _("An item must belong to the same project as its parent.")
+                )
 
             # Prevent circular references in the hierarchy by raising a ValidationError if self is found in the ancestors list
             self._find_ancestors()
 
             if self.item_type == self.parent.item_type:
                 if self.item_type.nestable:
-                    pass # Allow nesting of two of the same nestable types
+                    pass  # Allow nesting of two of the same nestable types
                 else:
-                    raise ValidationError(_("An item cannot be the same type as its parent unless they are both of the same nestable type."))
+                    raise ValidationError(
+                        _(
+                            "An item cannot be the same type as its parent unless they are both of the same nestable type."
+                        )
+                    )
             elif self.item_type.order <= self.parent.item_type.order:
                 raise ValidationError(
-                    _("An item must be 'below' its parent in the hierarchy unless they are of the same nestable type.")
+                    _(
+                        "An item must be 'below' its parent in the hierarchy unless they are of the same nestable type."
+                    )
                 )
 
     def save(self, *args, **kwargs):

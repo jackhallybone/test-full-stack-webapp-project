@@ -1,11 +1,9 @@
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
-
 from django.utils.translation import gettext_lazy as _
 
 from .mixins import AuditMixin
-from .models import Project, ItemType, ItemStatus, ItemLocation
-
+from .models import ItemLocation, ItemStatus, ItemType, Project
 
 # @receiver(pre_save)
 # def audit_fields(sender, instance, **kwargs):
