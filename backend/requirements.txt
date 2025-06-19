@@ -2,4 +2,7 @@ Django
 psycopg[binary]
 django-cors-headers
 graphene-django
+pytest
 coverage
+isort
+black

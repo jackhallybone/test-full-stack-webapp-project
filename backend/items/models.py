@@ -56,7 +56,7 @@ class Project(AuditMixin):
 
     def get_default_item_type(self):
         """Return the `ItemType` marked as default for the current `Project`."""
-        return self.get_item_types().filter(default=True).first()
+        return self.get_item_types().filter(default=True).first()  # obj or None
 
     def get_item_statuses(self):
         """Return all `ItemStatus`es for the current `Project`."""
@@ -64,7 +64,7 @@ class Project(AuditMixin):
 
     def get_default_item_status(self):
         """Return the `ItemStatus` marked as default for the current `Project`."""
-        return self.get_item_statuses().filter(default=True).first()
+        return self.get_item_statuses().filter(default=True).first()  # obj or None
 
     def get_item_locations(self):
         """Return all `ItemLocation`s for the current `Project`."""
@@ -72,7 +72,7 @@ class Project(AuditMixin):
 
     def get_default_item_location(self):
         """Return the `ItemLocation` marked as default for the current `Project`."""
-        return self.get_item_locations().filter(default=True).first()
+        return self.get_item_locations().filter(default=True).first()  # obj or None
 
     def get_descendants(self, **filters):
         """Return a QuerySet of all `Item`s matching the filter that are descendants of (assigned to) this `Project`."""
@@ -162,6 +162,8 @@ class BaseItemAttribute(models.Model):
                         f"There can only be one default {self.__class__.__name__} within each project."
                     )
                 )
+
+        # TODO: should we enforce that there is a default?
 
         if (
             type(self)
@@ -282,9 +284,9 @@ class Item(AuditMixin):
 
     class Meta:
         ordering = [
-            "item_type",
+            "item_type__order",
             "created_at",
-        ]  # order queries by type then oldest first
+        ]  # order queries by ItemType.order then by Item.created_at (order then oldest)
 
     def __str__(self):
         return f"Item: {self.title} ({self.item_type.name} in {self.project.name})"
