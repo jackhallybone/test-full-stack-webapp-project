@@ -11,7 +11,7 @@ services:
             - next_build:/app/.next
         ports:
             - 3000:3000
-        command: npm run dev-no-turbopack
+        command: npm run dev
         depends_on:
             - backend
 

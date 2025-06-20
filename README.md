@@ -1,17 +1,50 @@
-# Webapp Test Project
+# Therefore Knowledge Organisers
 
-A task management/kanban project to test Django, GraphQL and Next.js.
+A project management system where the items/tasks/todos are used to build knowledge documents. For me to explore Django, GraphQL and Next.js.
 
-The idea is to make a nestable task system where the project management views can occur at any level. For example in a
+## Backend
 
-    Project > Area > Feature > Task > Subtask
+A Django backend where `Project`s contain `Item`s which can nest under other items to form structures like:
 
-hierarchy, the it would be possible to view a kanban of all the items under the Project, or only the items under the Feature. That way, you could project manage with different granularity depending on your needs or audience.
+```
+Project
+    Item (Feature)
+        Item (Task)
+        Item (Task)
+            Item (SubTask)
+                Item (SubSubTask)
+    Item (Feature)
+```
 
-## Docker
+The `ItemType` attribute controls the structure, enforcing an `order` (eg, to prevent features nesting under tasks) and with a self `nestable` flag (eg, to allow tasks to nest under other tasks).
 
-docker-compose links Django to a PostgreSQL database volume and keeps the node modules off the host machine.
+Both projects and items have getters for `descendants` (all items nested under them in the hierarchy) and `children` (only the items nested directly under them).
 
-## Next.js
+## GraphQL API
 
-App router layout. Currently running in Docker without turbopack to support hot reloading.
+To efficiently work with nested data and related attributes like `ItemType` the backend exposes a graphQL endpoint. For example:
+
+```
+{
+  projects { # list all projects
+    name
+    children { # list all direct children of each project
+      title
+      itemType {
+        name
+      }
+      itemStatus {
+        name
+      }
+      itemLocation {
+        name
+      }
+      numChildren # the number of direct children that each item has
+    }
+  }
+}
+```
+
+## Frontend
+
+A Next.js frontend based on an evolving design in Figma.

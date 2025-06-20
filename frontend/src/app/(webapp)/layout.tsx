@@ -1,20 +1,12 @@
-import Notifications from './_components/Notifications';
 import Header from './_components/Header';
-import Sidebar from './_components/Sidebar';
+import Notifications from './_components/Notifications';
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function WebappLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className='h-screen flex flex-col'>
+    <div className="mx-auto px-2">
       <Notifications />
-      <div className="flex flex-col grow overflow-hidden">
-        <Header />
-        <div className='flex flex-1 overflow-hidden'>
-          <Sidebar className="w-64 m-2 mr-0 overflow-y-auto" />
-          <div className='flex-1 m-2 overflow-y-auto break-all'>
-            {children}
-          </div>
-        </div>
-      </div>
+      <Header />
+      {children}
     </div>
   );
 }

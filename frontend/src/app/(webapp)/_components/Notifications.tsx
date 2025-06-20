@@ -1,22 +1,30 @@
-import { cn } from '@/lib/utils'
+import { cn } from '@/app/lib/utils';
 
 type Notification = {
-    message: string;
-    colour: string;
-}
+  message: string;
+  color: string;
+};
 
 export default function Notifications() {
+  const notifications: Notification[] = [
+    // { message: "This is an example information message", color: "bg-brand-blue" },
+    // { message: "This is an example warning message", color: "bg-brand-yellow" },
+    // { message: "This is an example error message", color: "bg-brand-red" },
+  ];
 
-    const notifications: Notification[] = [
-        // { message: "This is an example warning message", colour: "bg-orange-300"},
-        // { message: "This is an example error message", colour: "bg-red-300"},
-    ]
-
-    return (
-        <>
-            {notifications.map((notification, index) => (
-                <div key={index} className={cn(notification.colour)}>{notification.message}</div>
-            ))}
-        </>
-    );
+  return (
+    <>
+      {notifications.map((notification, index) => (
+        <div
+          key={index}
+          className={cn(
+            'text-brand-off-black border-b p-1 text-center font-semibold',
+            notification.color
+          )}
+        >
+          {notification.message}
+        </div>
+      ))}
+    </>
+  );
 }

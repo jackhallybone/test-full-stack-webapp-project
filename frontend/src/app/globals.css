@@ -1,0 +1,50 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: light dark;
+  --brand-white: #ffffff;
+  --brand-off-white: #f7ecdf;
+  --brand-black: #000000;
+  --brand-off-black: #312a29;
+  --brand-light-grey: #f2f0ed;
+  --brand-dark-grey: #dfdcd9;
+  --brand-terracotta: #c6744e;
+  --brand-blue: #7690a9;
+  --brand-red: #dc5852;
+  --brand-yellow: #ecad4c;
+  --brand-green: #7c9c7d;
+  --background: var(--brand-white);
+  --foreground: var(--brand-off-black);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand-white: var(--brand-white);
+  --color-brand-off-white: var(--brand-off-white);
+  --color-brand-black: var(--brand-black);
+  --color-brand-off-black: var(--brand-off-black);
+  --color-brand-light-grey: var(--brand-light-grey);
+  --color-brand-dark-grey: var(--brand-dark-grey);
+  --color-brand-terracotta: var(--brand-terracotta);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-red: var(--brand-red);
+  --color-brand-yellow: var(--brand-yellow);
+  --color-brand-green: var(--brand-green);
+  --font-sans: var(--font-noto-sans);
+  --font-mono: var(--font-noto-mono);
+  --font-script: var(--font-pacifico);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: var(--brand-off-black);
+    --foreground: var(--brand-off-white);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-noto-sans), Arial, sans-serif;
+}
