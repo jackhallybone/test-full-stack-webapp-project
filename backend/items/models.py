@@ -259,7 +259,7 @@ class Item(AuditMixin):
         title (str): A summary of what needs to be done.
         changelog (str, optional): A summary of what has been done.
         requirements (str, optional): A description of what needs to be done.
-        outcomes (str, optional): A description of what was done.
+        outcome (str, optional): A description of what was done.
     """
 
     project = models.ForeignKey(Project, related_name="items", on_delete=models.CASCADE)

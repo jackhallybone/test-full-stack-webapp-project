@@ -9,6 +9,7 @@ export default function Notifications() {
   const notifications: Notification[] = [
     // { message: "This is an example information message", color: "bg-brand-blue" },
     // { message: "This is an example warning message", color: "bg-brand-yellow" },
+    // { message: "This is a second example warning message", color: "bg-brand-yellow" },
     // { message: "This is an example error message", color: "bg-brand-red" },
   ];
 
