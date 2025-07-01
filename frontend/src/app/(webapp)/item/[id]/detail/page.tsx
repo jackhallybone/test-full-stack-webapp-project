@@ -1,13 +1,41 @@
 import { graphQLClient } from "@/app/lib/graphql";
 import { gql } from 'graphql-request'
-import ItemEditor from "./ItemEditor";
+import ItemDetails from "./ItemDetails";
+import Breadcrumb from "../../../_components/_nav/Breadcrumb";
+
+type ItemType = {
+  id: string;
+  name: string;
+}
+type itemStatus = {
+  id: string;
+  name: string;
+}
+
+type Project = {
+  id: string;
+  name: string;
+}
+
+type ItemLine = {
+  id: string;
+  itemType: ItemType;
+  itemStatus: itemStatus;
+  title: string;
+  numChildren: string;
+}
 
 type Item = {
   id: string;
+  itemType: ItemType;
+  itemStatus: itemStatus;
   title: string;
   changelog: string;
   requirements: string;
   outcome: string;
+  project: Project;
+  parent: ItemLine;
+  children: ItemLine[];
 }
 
 type GetItemResponse = {
@@ -25,10 +53,48 @@ export default async function DetailPage({
     query GetItem($id: ID!) {
       item(id: $id) {
         id
+        itemType {
+          id
+          name
+        }
+        itemStatus {
+          id
+          name
+        }
         title
         changelog
         requirements
         outcome
+        project {
+          id
+          name
+        }
+        parent {
+          id
+          itemType {
+            id
+            name
+          }
+          itemStatus {
+            id
+            name
+          }
+          title
+          numChildren
+        }
+        children {
+          id
+          itemType {
+            id
+            name
+          }
+          itemStatus {
+            id
+            name
+          }
+          title
+          numChildren
+        }
       }
     }
   `;
@@ -40,7 +106,7 @@ export default async function DetailPage({
 
       <p className="mb-4">Detail View</p>
 
-      <ItemEditor item={data.item} />
+      <ItemDetails item={data.item} />
 
       <p>{JSON.stringify(data)} </p>
     </>
