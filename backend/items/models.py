@@ -336,6 +336,12 @@ class Item(AuditMixin):
         ancestor_ids = self._find_ancestors()
         return len(ancestor_ids)
 
+    def get_siblings(self):
+        """Returns all the `Item`s that are siblings of this `Item`."""
+        if self.parent:
+            return self.parent.children.exclude(id=self.id)
+        return Item.objects.none()
+
     def _find_all_descendants(self):
         """Create a list of ids of all `Item`s that are descendants of this `Item."""
         # Fetch only the necessary fields for traversing the ancestry (id, parent_id) for all items in the current project

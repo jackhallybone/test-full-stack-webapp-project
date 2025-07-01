@@ -100,6 +100,9 @@ class ItemType(DjangoObjectType):
         lambda: ItemType,
     )
     num_ancestors = graphene.Int()
+    siblings = graphene.List(
+        lambda: ItemType,
+    )
     descendants = graphene.List(
         lambda: ItemType, filters=graphene.Argument(ItemFilterInput)
     )
@@ -120,6 +123,10 @@ class ItemType(DjangoObjectType):
     def resolve_num_ancestors(self, info):
         """Resolve the number of `Item`s that are ancestors of this `Item`."""
         return self.get_ancestors()
+
+    def resolve_siblings(self, info):
+        """Resolve all the `Item`s that are siblings of this `Item`."""
+        return self.get_siblings()
 
     def resolve_descendants(self, info, filters=None):
         """Resolve all `Item`s matching the filter that are descendants of this `Item."""
