@@ -1,25 +1,16 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { cn } from '@/app/lib/utils';
 
 type TitleProps = {
-  tag: 'project' | 'item';
-  name: string;
-  id?: string;
+  href: string;
+  children: React.ReactNode;
   className?: string;
 };
 
-export default function Title({ tag, name, id, className }: TitleProps) {
-  const router = useRouter();
-
+export default function Title({ href, children, className = "" }: TitleProps) {
   return (
-    <button
-      onClick={() => router.push(`/${tag}/${id}`)}
-      className={cn("cursor-pointer hover:underline", className)}
-
-    >
-      {name}
-    </button>
+    <Link href={href} className={cn("inline-block cursor-pointer hover:underline", className)}>
+      {children}
+    </Link>
   );
 }

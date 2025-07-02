@@ -21,7 +21,7 @@ export default function ItemDetails({ item }: { item: Item }) {
   }
 
   return (
-    <form className="space-y-6 max-w-xl" onSubmit={e => e.preventDefault()}>
+    <>
       <AutoSaveField
         id="title"
         label="Title"
@@ -33,7 +33,7 @@ export default function ItemDetails({ item }: { item: Item }) {
         id="changelog"
         label="Changelog"
         initialValue={item.changelog}
-        type="textarea"
+        type="input"
         onSave={val => saveField('changelog', val)}
       />
       <AutoSaveField
@@ -50,6 +50,6 @@ export default function ItemDetails({ item }: { item: Item }) {
         type="textarea"
         onSave={val => saveField('outcome', val)}
       />
-    </form>
+    </>
   );
 }

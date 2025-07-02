@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import Title from './Title';
 import { cn } from '@/app/lib/utils';
@@ -9,13 +8,12 @@ import { cn } from '@/app/lib/utils';
 
 type ChevronProps = {
   tag: 'project' | 'item';
-  options: any[];
+  options: { id: string; [key: string]: any }[];
   labelKey: "name" | "title";
   selected?: string
 };
 
 export default function Chevron({ tag, options, labelKey, selected }: ChevronProps) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
 
   return (
@@ -25,33 +23,40 @@ export default function Chevron({ tag, options, labelKey, selected }: ChevronPro
         className="flex items-center focus:outline-none cursor-pointer"
       >
         <ChevronRightIcon
-          className={`w-4 h-4 hover:rotate-90 ${open ? 'rotate-90' : ''}`}
+          className={cn("w-4 h-4 transition-transform", open && "rotate-90")}
         />
       </button>
 
       {open && (
-        <div className="absolute mt-2 w-40 bg-white border rounded shadow-lg">
-          <ul>
-            {options.map((option) => (
-              <li
-                key={option.id}
-                className={cn(
-                  option.id === selected && "text-gray-400 cursor-default pointer-events-none"
-                )}
-              >
-                <Title
-                  tag={tag}
-                  name={option[labelKey]}
-                  id={option.id}
-                  className="px-4 py-2 w-full text-left hover:bg-gray-100"
-                />
-              </li>
-            ))}
-            <li
-              onClick={() => router.push(`/${tag}/create`)}
-              className='px-4 py-2 w-full text-left cursor-pointer hover:underline hover:bg-gray-100'
-            >
-              Create New...
+        <div
+          className="absolute mt-2 w-40 overflow-hidden border rounded shadow-lg"
+          onMouseLeave={() => setOpen(false)}
+        >
+          <ul role="listbox" tabIndex={-1}>
+
+            {options.map(({ id, ...option }) => {
+              const label = option[labelKey];
+              const isSelected = id === selected;
+
+              return (
+                <li
+                  key={id}
+                  className={cn(
+                    "px-4 py-2 w-full text-left hover:bg-gray-100",
+                    isSelected && "text-gray-400 cursor-default pointer-events-none"
+                  )}
+                >
+                  <Title href={`/${tag}/${id}`}>
+                    {label}
+                  </Title>
+                </li>
+              );
+            })}
+
+            <li className="px-4 py-2 w-full text-left hover:bg-gray-100">
+              <Title href={`/${tag}/create`}>
+                Create new...
+              </Title>
             </li>
           </ul>
         </div>

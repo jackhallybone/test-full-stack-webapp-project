@@ -85,18 +85,19 @@ export default async function Breadcrumb({ tag, id }: BreadcrumbProps) {
   return (
     <>
       <div className="flex flex-row gap-x-2 items-center">
-        <HomeIcon className="size-5" />
+        <Title href="/dashboard">
+          <HomeIcon className="size-5" />
+        </Title>
+
         <Chevron
           tag="project"
           options={data.projects}
           selected={data.item.project.id}
           labelKey="name"
         />
-        <Title
-          tag="project"
-          name={data.item.project.name}
-          id={data.item.project.id}
-        />
+        <Title href={`/project/${data.item.project.id}`}>
+          {data.item.project.name}
+        </Title>
 
         {data.item.ancestors.map((ancestor, index) => {
           return (
@@ -107,11 +108,9 @@ export default async function Breadcrumb({ tag, id }: BreadcrumbProps) {
                 selected={ancestor.id}
                 labelKey="title"
               />
-              <Title
-                tag="item"
-                name={ancestor.title}
-                id={ancestor.id}
-              />
+              <Title href={`/item/${ancestor.id}`}>
+                {ancestor.title}
+              </Title>
             </React.Fragment>
           );
         })}
@@ -122,63 +121,16 @@ export default async function Breadcrumb({ tag, id }: BreadcrumbProps) {
           selected={data.item.id}
           labelKey="title"
         />
-        <Title
-          tag="item"
-          name={data.item.title}
-          id={data.item.id}
-        />
+        <Title href={`/item/${data.item.id}`}>
+          {data.item.title}
+        </Title>
+
         <Chevron
           tag="item"
           options={data.item.children}
           labelKey="title"
         />
-
-        {/* <Drop
-          type="item"
-          options={data.projects}
-          labelKey="title"
-        />
-        <button className="cursor-pointer hover:underline">Item</button>
-        <Drop />
-        <button className="cursor-pointer hover:underline">Item</button>
-        <Drop />
-        <button className="cursor-pointer hover:underline">Item</button> */}
       </div>
-
-
-      {/* <form className="flex flex-row gap-x-2">
-        <Dropdown
-          id="project"
-          name="project"
-          options={data.projects}
-          valueKey="id"
-          labelKey="name"
-          selectedValue={data.item.project.id}
-        />
-
-        {data.item.ancestors.map((ancestor, index) => {
-          return (
-            <Dropdown
-              key={ancestor.id}
-              id={`ancestor-${index}`}
-              name="item"
-              options={[ancestor, ...ancestor.siblings]}
-              valueKey="id"
-              labelKey="title"
-              selectedValue={ancestor.id}
-            />
-          )
-        })}
-
-        <Dropdown
-          id="item"
-          name="item"
-          options={[data.item, ...data.item.siblings]}
-          valueKey="id"
-          labelKey="title"
-          selectedValue={data.item.id}
-        />
-      </form> */}
     </>
   );
 }
